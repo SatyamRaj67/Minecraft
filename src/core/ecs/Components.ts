@@ -1,0 +1,1 @@
+// Component type registry and schema
