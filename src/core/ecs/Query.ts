@@ -1,1 +1,0 @@
-// Archetype query builder with caching
