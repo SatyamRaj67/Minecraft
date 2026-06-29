@@ -20,3 +20,30 @@ We will just need to pack it through a very intelligent algorithm that packs eve
 
 Thus Index Buffer offers the first line of small but critical Optimization.
 
+> [!NOTE]
+> These only store the position of the vertices and not the actual vertices
+>
+> You can use `Uint32Array` for these rather than the typical `Float32Array` we are going to use with Vertex Buffers
+
+### Vertex Buffer
+As the name suggests, this stores every single vertex of a mesh. This is mostly static.
+
+Rest everything is from the Index Buffer, now don't make me write all that..
+
+#### Vertex Buffer Usages
+- VERTEX: This is the most common usage, and it is used to store vertex data.
+- INDEX: This is used to store index data
+- COPY_SRC: This is used to copy data from one buffer to another.
+- COPY_DST: This is used to copy data to a buffer from another buffer.
+
+#### BRUH, BUT WHAT ABOUT MY MOVING DATA????
+
+### Uniform Buffer
+Uniform buffers are a special buffer, that still well.. store data, but what is unique about this is that.. IT CAN STORE DATA THAT IS MOVING, AND CHANGING CONSTANTLY, AND IT IS NOT STATIC.
+
+### How to writeBuffer
+
+```wgsl
+
+device.queue.writeBuffer(buffer, 0, data);
+```

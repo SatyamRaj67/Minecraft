@@ -18,7 +18,6 @@ WebGPU is a new web standard that provides modern graphics and computation capab
 
 Now, Coming back to our topic.
 
-
 But if you want a procedurally generated world, the chunks positions should not be kept in smaller chunks of data as it will restrict the procedural nature of the world. Instead, it is better to use a larger data structure that can accommodate the entire world space.
 
 > [!NOTE] As a developer note

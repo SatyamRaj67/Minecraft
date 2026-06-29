@@ -1,19 +1,28 @@
 {
   "name": "minecraft",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "tsc -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "test": "vitest test",
+    "test:ui": "vitest --ui",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "validate-shaders": "tsx tools/shader-validator.ts"
   },
   "devDependencies": {
+    "@types/node": "^26.0.1",
+    "@vitest/ui": "^4.1.9",
     "@webgpu/types": "^0.1.71",
-    "typescript": "~6.0.2",
-    "vite": "^8.1.0"
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.0",
+    "vite-plugin-glsl": "^1.6.0",
+    "vite-plugin-wgsl": "^1.0.3",
+    "vitest": "^4.1.9"
   },
-  "dependencies": {
-    "vite-plugin-wgsl": "^1.0.3"
-  }
+  "dependencies": {}
 }

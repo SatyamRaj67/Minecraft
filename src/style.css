@@ -1,15 +1,22 @@
-:root{
+:root {
   --background: #1e1e1e;
   --foreground: #d4d4d4;
+
+  --red: #f94144;
+  --orange: #f3722c;
+  --yellow: #f9c74f;
+  --green: #90be6d;
+  --blue: #43aa8b;
+  --indigo: #577590;
 }
 
-*{
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-body{
+body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: Arial, sans-serif;
@@ -18,7 +25,33 @@ body{
   overflow: hidden;
 }
 
-canvas{
+canvas {
+  position: absolute;
   width: 100vw;
   height: 100vh;
+}
+
+section {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+/* === ERROR SECTION === */
+section#error-section {
+  display: none;
+}
+
+section#error-section.active {
+  display: flex;
+}
+
+section#error-section h1 {
+  color: var(--red);
+  margin-bottom: 1rem;
+  text-shadow: 0 0 10px var(--red);
 }
