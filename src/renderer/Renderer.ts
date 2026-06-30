@@ -17,9 +17,11 @@
 
 import { m4Multiply, m4Perspective, mat4 } from "@/core/math/Mat4";
 import { vec3, Vec3Like } from "@/core/math/Vec3";
+import { assert } from "@/debug/Assert";
 import { Logger } from "@/debug/Logger";
 import { createUniformBuffer, type GpuBuffer } from "@/platform/gpu/GpuBuffer";
 import { CAMERA_UBO_SIZE, FRAMES_IN_FLIGHT } from "@/platform/gpu/GpuLimits";
+import { GeometryPass } from "./passes/GeometryPass";
 
 // === Camera State ===
 
@@ -33,6 +35,8 @@ export interface CameraState {
 }
 
 export class Renderer {
+  private geometryPass!: GeometryPass;
+
   // Camera UBO
   private cameraUBOs: GpuBuffer[] = [];
   private cameraUboFrame: number = 0;
@@ -63,7 +67,9 @@ export class Renderer {
     private format: GPUTextureFormat,
   ) {
     // TODO: Initialize Render Graph
-    // TODO: Initialize Geomtery Pass
+
+    this.geometryPass = new GeometryPass();
+
     // TODO: Initialize Material System
   }
 
@@ -71,7 +77,7 @@ export class Renderer {
     this.width = width;
     this.height = height;
 
-    // TODO: Initialize Geometry Pass
+    this.geometryPass.onInit(this.device, this.format);
 
     for (let i = 0; i < FRAMES_IN_FLIGHT; i++) {
       this.cameraUBOs.push(
@@ -81,13 +87,41 @@ export class Renderer {
 
     // TODO: Register Terrain Material
 
-    Logger.info(`Renderer: initialized ${width}×${height}`);
+    Logger.info(`Renderer: initialized ${width}x${height}`);
   }
 
   renderFrame() // TODO: chunkManager: ChunkManager,
   // TODO: _arena: Arena
   : void {
+    // TODO: Hot Reload Swap Materials
+
     this.updateCameraMatrices();
+
+    const drawList = [];
+    this.geometryPass.visibleChunks = drawList;
+
+    const uboSlot = this.cameraUBOs[this.cameraUboFrame % FRAMES_IN_FLIGHT];
+    assert(uboSlot !== undefined, "Camera UBO ring not ignited into existence");
+    uboSlot.write(this.device, this.cameraUboData);
+    this.cameraUboFrame++;
+
+    // TODO: Graph Shenanigans
+
+    // TODO: Add the necessary Passes like GeometryPass, LightingPass, etc.
+
+    const encoder = this.device.createCommandEncoder({
+      label: `Frame Command Encoder`,
+    });
+    const swapTexture = this.context.getCurrentTexture();
+    const swapView = swapTexture.createView({
+      label: `Swapchain Texture View`,
+    });
+
+    // TODO: Execute Render Graph
+
+    this.device.queue.submit([encoder.finish()]);
+
+    // TODO: Update the FrameStats
   }
 
   private updateCameraMatrices(): void {
