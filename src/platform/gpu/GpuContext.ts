@@ -21,13 +21,7 @@ const REQUIRED_FEATURES: GPUFeatureName[] = [
   // 'timestamp-query',  // For GpuTimestamps — request optionally
 ];
 
-const OPTIONAL_FEATURES: GPUFeatureName[] = [
-  "timestamp-query",
-  "depth-clip-control",
-  "texture-compression-bc", // Desktop DXT textures
-  "texture-compression-etc2", // Mobile textures
-  "indirect-first-instance", // For GPU-driven rendering (Phase 2+)
-];
+const OPTIONAL_FEATURES: GPUFeatureName[] = [];
 
 export class GpuContext {
   static adapterInfo: GPUAdapterInfo | null = null;
@@ -92,10 +86,6 @@ export class GpuContext {
         ? "Minecraft TruthEntity Developer Device"
         : "Minecraft Device",
     });
-
-    // TODO: Implement GPU Error Handlers
-
-    // TODO: Implement Lost Device Handler
 
     // === Canvas Context ===
     const context = opts.canvas.getContext("webgpu");

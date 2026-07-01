@@ -16,8 +16,6 @@ if (!canvas) {
 canvas.width = window.innerWidth * devicePixelRatio;
 canvas.height = window.innerHeight * devicePixelRatio;
 
-// TODO: Previous Crash Checks ===
-
 // === ENGINE ===
 const engine = new Engine();
 

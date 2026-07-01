@@ -1,31 +1,16 @@
-/**
- * Engine - Top-level orchestrator
- *
- * Frame lifecycle
- * 1. inputManager.update()          — flush DOM events → EventBus
- * 2. frameArena.reset()             — reclaim frame-scoped memory
- * 3. FrameStats.beginFrame()        — zero counters
- * 4. world.flushQueries()           — revalidate ECS queries if dirty
- * 5. for each system: system.execute(world, dt)
- * 6. world.flushDeferred()          — apply pending structural changes
- * 7. chunkManager.update()          — load/unload, upload pending meshes
- * 8. renderer.renderFrame()         — build + compile + execute RenderGraph
- * 9. FrameStats.endFrame()          — record CPU frame time
- * 10. debugOverlay.render()         — HUD metrics (DEV only)
- * 11. requestAnimationFrame(loop)    — schedule next frame
- */
-
-const WORLD_SEED = 69420;
+import { assert } from "@/debug/Assert";
+import { Logger } from "@/debug/Logger";
+import { GpuContext } from "@/platform/gpu/GpuContext";
+import { Renderer } from "@/renderer/Renderer";
 
 export interface EngineConfig {
   canvas: HTMLCanvasElement;
   powerPreference: GPUPowerPreference;
 }
 
-import { Logger } from "@/debug/Logger";
-import { GpuContext } from "@/platform/gpu/GpuContext";
-
 export class Engine {
+  private renderer!: Renderer;
+
   private rafHandle: number | null = null;
   private lastTimestamp = 0;
   private running = false;
@@ -34,18 +19,15 @@ export class Engine {
   async init(config: EngineConfig): Promise<void> {
     Logger.info("Engine: initializing...");
 
-    // Create GPU context
     const gpu = await GpuContext.create({
       canvas: config.canvas,
       powerPreference: config.powerPreference,
       validation: import.meta.env.DEV,
     });
 
-    // TODO: Subsystems like InputManager, ChunkManger and god hell
+    this.renderer = new Renderer(gpu.device, gpu.context, gpu.format);
 
-    // TODO: Renderer
-
-    // TODO: Crash Reporter
+    await this.renderer.init(config.canvas.width, config.canvas.height);
 
     // === Canvas Resize Observer ===
     const resizeObserver = new ResizeObserver(() => {
@@ -54,18 +36,17 @@ export class Engine {
 
       config.canvas.width = w;
       config.canvas.height = h;
+
+      this.renderer.onResize(w, h);
     });
     resizeObserver.observe(config.canvas);
+
+    Logger.info("Engine: initialization complete");
   }
-
-  // TODO: Init Systems through the sorted Systems by Khan's Alpgorithm
-
-  // TODO: Start the game through GlobalBus
-
-  // TODO: Registration of System into the Engine
 
   // === GAME LOOP ===
   start(): void {
+    assert(!this.running, "Engine is already running");
     this.running = true;
     this.lastTimestamp = performance.now();
     this.rafHandle = requestAnimationFrame((ts) => this.loop(ts));
@@ -78,34 +59,23 @@ export class Engine {
       cancelAnimationFrame(this.rafHandle);
       this.rafHandle = null;
     }
-
-    // TODO: Emit in GlobalBus and stop all the actions to happen.
   }
 
   private loop(timestamp: number): void {
     if (!this.running) return;
 
     let dt = (timestamp - this.lastTimestamp) / 1000; // seconds
-    if (dt > 0.1) dt = 0.1; // clamp to avoid spiral of death
+    if (dt > 0.1) dt = 0.1;
 
-    // TODO: GAME LOOP
+    this.renderer.renderFrame();
 
-    // TODO: Start Frame
-    // TODO: Update InputManager
-    // TODO: Update Systems
-    // TODO: Update ChunkManager
-    // TODO: Render Frame
-    // TODO: End Frame
-
-    // Schedule the Next Frame
     this.rafHandle = requestAnimationFrame((ts) => this.loop(ts));
   }
 
   destroy(): void {
     this.stop();
 
-    // TODO: Kill Switch
-    // We need to Kill all the instances alongside the Systems that we have added.
+    this.renderer.destroy();
 
     Logger.info("Engine: destroyed");
   }
