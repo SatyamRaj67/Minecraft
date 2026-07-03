@@ -1,12 +1,17 @@
-@vertex
-fn vs_main(
-    @builtin(vertex_index) VertexIndex: u32
-) -> @builtin (position) vec4f {
-    var pos = array<vec2f, 3>(
-        vec2f(0.0, 0.5),
-        vec2f(-0.5, -0.5),
-        vec2f(0.5, -0.5)
-    );
+struct VertIn{
+    @location(0) position: vec4<f32>,
+    @location(1) color: vec4<f32>,
+}
 
-    return vec4f(pos[VertexIndex], 0.0, 1.0);
+struct VertOut{
+    @builtin(position) position: vec4<f32>,
+    @location(0) color: vec4<f32>,
+}
+
+@vertex
+fn vs_main(input: VertIn) -> VertOut {
+    var output: VertOut;
+    output.position = input.position;
+    output.color = input.color;
+    return output;
 }
