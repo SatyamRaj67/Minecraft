@@ -19,7 +19,7 @@ struct FragOut {
 
 // === Helper Fuctions ===
 
-gn encodeNormal(n: vec3<f32>) -> vec3<f32> {
+fn encodeNormal(n: vec3<f32>) -> vec3<f32> {
     return n * 0.5 + 0.5;
 }
 

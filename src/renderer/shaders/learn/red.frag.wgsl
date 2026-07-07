@@ -12,7 +12,7 @@ fn fs_main(input: FragIn) -> FragOut {
   var output: FragOut;
 
   let color = input.color;
-  let grid = vec2u(input.position.xy) / 8;
+  let grid = vec2u(input.position.xy) / 16;
   let checker = (grid.x + grid.y) % 2 == 1;
 
   if (checker) {

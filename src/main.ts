@@ -1,5 +1,7 @@
 import { Engine } from "./core/Engine";
+import { DebugOverlay } from "./debug/DebugOverlay";
 import { Logger, LogLevel } from "./debug/Logger";
+import { PlayerSystem } from "./world/systems/PlayerSystem";
 
 const canvas = document.getElementById(
   "game-canvas",
@@ -31,8 +33,6 @@ engine
     powerPreference: "high-performance",
   })
   .then(() => {
-    // TODO: Register systems here, in dependency order
-
     engine.start();
   })
   .catch((err: unknown) => {

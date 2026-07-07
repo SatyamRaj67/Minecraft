@@ -25,7 +25,7 @@ struct ObjectUBO {
 
 //=== Bind Groups ===
 @group(0) @binding(0) var<uniform > camera : CameraUBO;
-@group(2) @binding(0) var<uniform > object : ObjectUBO
+@group(2) @binding(0) var<uniform > object : ObjectUBO;
 
 //=== Vertex Input ===
 //Again, It must match the GpuLimits.ts

@@ -1,7 +1,13 @@
 import { assert } from "@/debug/Assert";
+import { FrameStats } from "@/debug/FrameStats";
 import { Logger } from "@/debug/Logger";
 import { GpuContext } from "@/platform/gpu/GpuContext";
+import { InputManager } from "@/platform/web/InputManager";
 import { Renderer } from "@/renderer/Renderer";
+import { EngineEvent, globalBus } from "./ecs/events/EventBus";
+import { System, topologicalSort } from "./ecs/System";
+import { DebugOverlay } from "@/debug/DebugOverlay";
+import { PlayerSystem } from "@/world/systems/PlayerSystem";
 
 export interface EngineConfig {
   canvas: HTMLCanvasElement;
@@ -9,10 +15,21 @@ export interface EngineConfig {
 }
 
 export class Engine {
+  private systems: System[] = [];
+  private sortedSystems: System[] | null = null;
+
+  // Subsystems
   private renderer!: Renderer;
+  private input!: InputManager;
+  private debugOverlay!: DebugOverlay;
+
+  // Game Systems
+  // private physics!: PhysicsSystem;
+  private player!: PlayerSystem;
+  // private camera! CameraSystem;
 
   private rafHandle: number | null = null;
-  private lastTimestamp = 0;
+  private lastTimestamp: number = 0;
   private running = false;
   constructor() {}
 
@@ -22,12 +39,30 @@ export class Engine {
     const gpu = await GpuContext.create({
       canvas: config.canvas,
       powerPreference: config.powerPreference,
-      validation: import.meta.env.DEV,
+      validation: __DEV__,
     });
 
-    this.renderer = new Renderer(gpu.device, gpu.context, gpu.format);
+    // === Subsystems ===
+    this.input = new InputManager(config.canvas);
 
+    this.renderer = new Renderer(gpu.device, gpu.context, gpu.format);
     await this.renderer.init(config.canvas.width, config.canvas.height);
+
+    // === ECS systems ===
+    this.player = new PlayerSystem(this.input, this.renderer);
+
+    this.registerSystem(this.player);
+
+    // === Debug Overlay ===
+    this.debugOverlay = new DebugOverlay(
+      config.canvas.parentElement ?? document.body,
+    );
+    this.debugOverlay.resize(config.canvas.width, config.canvas.height);
+
+    globalBus.on(EngineEvent.KEY_DOWN, ({ code }) => {
+      if (code === "F3") this.debugOverlay.toggle();
+      if (code === "Escape") this.input.exitPointerLock();
+    });
 
     // === Canvas Resize Observer ===
     const resizeObserver = new ResizeObserver(() => {
@@ -38,10 +73,33 @@ export class Engine {
       config.canvas.height = h;
 
       this.renderer.onResize(w, h);
+      this.debugOverlay.resize(w, h);
+      globalBus.emit(EngineEvent.RESOLUTION_CHANGED, { width: w, height: h });
     });
     resizeObserver.observe(config.canvas);
 
+    for (const system of this.sortedSystems ?? []) {
+      system.onInit?.();
+    }
+
+    globalBus.emit(EngineEvent.ENGINE_INIT, {});
     Logger.info("Engine: initialization complete");
+  }
+
+  // === System Management ===
+  registerSystem(system: System): void {
+    this.systems.push(system);
+    this.sortedSystems = null; // Invalidate sorted cache
+  }
+
+  private compileSystems(): void {
+    this.sortedSystems = topologicalSort(this.systems);
+    Logger.info(
+      `Engine: compiled ${this.sortedSystems.length} systems in dependency order`,
+    );
+    for (const s of this.sortedSystems) {
+      Logger.verbose("Engine", `System: ${s.name}`);
+    }
   }
 
   // === GAME LOOP ===
@@ -59,15 +117,36 @@ export class Engine {
       cancelAnimationFrame(this.rafHandle);
       this.rafHandle = null;
     }
+    globalBus.emit(EngineEvent.ENGINE_SHUTDOWN, {});
   }
 
   private loop(timestamp: number): void {
     if (!this.running) return;
 
     let dt = (timestamp - this.lastTimestamp) / 1000; // seconds
+    this.lastTimestamp = timestamp;
+
+    // Clamp dt to 100ms to prevent spiral of death on tab switch / freeze
     if (dt > 0.1) dt = 0.1;
 
+    FrameStats.beginFrame();
+
+    // Input
+    this.input.update();
+
+    if (!this.sortedSystems) this.compileSystems();
+
+    for (const system of this.sortedSystems!) {
+      system.execute(dt);
+    }
+
     this.renderer.renderFrame();
+
+    if (__DEV__) {
+      this.debugOverlay.render();
+    }
+
+    FrameStats.endFrame();
 
     this.rafHandle = requestAnimationFrame((ts) => this.loop(ts));
   }
@@ -75,7 +154,13 @@ export class Engine {
   destroy(): void {
     this.stop();
 
+    for (const system of this.sortedSystems ?? []) {
+      system.onDestroy?.();
+    }
+
     this.renderer.destroy();
+    this.input.destroy();
+    this.debugOverlay.destroy();
 
     Logger.info("Engine: destroyed");
   }
