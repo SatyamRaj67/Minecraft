@@ -7,6 +7,9 @@ import {
   PITCH_MAX,
   PITCH_MIN,
   T_PITCH,
+  T_PX,
+  T_PY,
+  T_PZ,
   T_YAW,
 } from "./components/TransformComponent";
 import { EngineEvent, globalBus } from "@/core/ecs/events/EventBus";
@@ -21,8 +24,10 @@ const MOUSE_SENS = 0.0015; // rad per pixel
 
 export class PlayerSystem implements System {
   readonly name = "PlayerSystem";
+  // TODO: Include Physics System into the dependency..
   readonly dependencies: string[] = [];
 
+  // TODO: Fix this to include Entity when you add Entities..
   private playerEntity: null = null;
   private flyMode = false;
   private spawnY = 80;
@@ -119,5 +124,29 @@ export class PlayerSystem implements System {
       // Jump impulse
       // TODO: JUMP IMPULSE
     }
+    // TODO: Implement World Components
+
+    // === Push Camera State to Renderer
+    this.renderer.camera.position[0] = this.tBuf[T_PX]!;
+    this.renderer.camera.position[1] = this.tBuf[T_PY]! + 1.62; // Eye height
+    this.renderer.camera.position[2] = this.tBuf[T_PZ]!;
+    this.renderer.camera.yaw = yaw;
+    this.renderer.camera.pitch = pitch;
+
+    // === Update Chunk Loader Position ===
+    // TODO: Implement this, but I am adding a simple prototype of what it looks like..
+
+    const px = this.tBuf[T_PX]!;
+    const pz = this.tBuf[T_PZ]!;
+
+    (
+      this as unknown as { _emitPos: (x: number, z: number) => void }
+    )._emitPos?.(px, pz);
+  }
+
+  // TODO: onDestroy
+
+  getPosition(): [number, number, number] {
+    return [this.tBuf[T_PX]!, this.tBuf[T_PY]!, this.tBuf[T_PZ]!];
   }
 }

@@ -45,7 +45,7 @@ export class GpuBuffer {
   /**
    * Write data into the buffer via queue.writeBuffer
    */
-  write(device: GPUDevice, data: ArrayBufferView, bufferOffset = 0): void {
+  write(device: GPUDevice, data: ArrayBufferView<ArrayBuffer>, bufferOffset = 0): void {
     if (this._destroyed) {
       Logger.error(
         `GpuBuffer.write: buffer '${this.label}' is already destroyed`,

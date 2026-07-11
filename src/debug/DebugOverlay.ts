@@ -6,11 +6,11 @@ const FRAME_MS_GREEN = 10; // < 10ms: good
 const FRAME_MS_YELLOW = 16; // < 14ms: acceptable
 //  >14ms: red (approaching over 16.6ms budget)
 
-const PANEL_BG = "rgba(0, 0, 0, 0.65)";
-const COLOR_GREEN = "#44ff88";
-const COLOR_YELLOW = "#ffdd44";
-const COLOR_RED = "#ff4444";
-const COLOR_WHITE = "#e8e8e8";
+const PANEL_BG = "#1e1e1e";
+const COLOR_GREEN = "#90be6d";
+const COLOR_YELLOW = "#f9c74f";
+const COLOR_RED = "#f94144";
+const COLOR_WHITE = "#d4d4d4";
 const COLOR_GREY = "#888888";
 const FONT = '13px "JetBrains Mono", "Fira Code", monospace';
 

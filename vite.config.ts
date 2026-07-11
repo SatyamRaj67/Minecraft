@@ -1,9 +1,13 @@
-import { resolve } from "node:path";
 import { defineConfig } from "vite";
-import glsl from "vite-plugin-glsl";
+import wgsl from "vite-plugin-wgsl";
+import { resolve } from "path";
 
 export default defineConfig({
-  plugins: [glsl()],
+  plugins: [
+    wgsl({
+      include: ["**/*.wgsl", "**/*.glsl", "**/*.vert", "**/*.frag"],
+    }),
+  ],
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),
@@ -21,18 +25,20 @@ export default defineConfig({
   },
   worker: {
     format: "es",
-    plugins: () => [glsl()],
+    plugins: () => [wgsl({
+      include: ["**/*.wgsl", "**/*.glsl", "**/*.vert", "**/*.frag"],
+    })],
   },
   build: {
     target: "es2025",
     sourcemap: true,
     rollupOptions: {
-      // output: {
-      // manualChunks: {
-      // "engine-core": ["src/core/Engine.ts"],
-      // "world-gen": ["src/world/generation/WorldGen.worker.ts"],
-      // },
-      // },
+      output: {
+        manualChunks: {
+          // @ts-ignore
+          "engine-core": ["./src/core/Engine.ts"],
+        },
+      },
     },
   },
   server: {
@@ -40,5 +46,8 @@ export default defineConfig({
       "Cross-Origin-Opener-Policy": "same-origin",
       "Cross-Origin-Embedder-Policy": "require-corp",
     },
+  },
+  optimizeDeps: {
+    exclude: [],
   },
 });

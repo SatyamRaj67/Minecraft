@@ -1,7 +1,5 @@
 import { Engine } from "./core/Engine";
-import { DebugOverlay } from "./debug/DebugOverlay";
 import { Logger, LogLevel } from "./debug/Logger";
-import { PlayerSystem } from "./world/systems/PlayerSystem";
 
 const canvas = document.getElementById(
   "game-canvas",
@@ -22,8 +20,8 @@ canvas.height = window.innerHeight * devicePixelRatio;
 const engine = new Engine();
 
 // Allow all type of messages to be sent during Development (and protect it during Production)
-if (import.meta.env.DEV) {
-  (globalThis as unknown as Record<string, unknown>).__engine = engine;
+if (__DEV__) {
+  (globalThis as Record<string, unknown>).__engine = engine;
   Logger.setLevel(LogLevel.VERBOSE);
 }
 

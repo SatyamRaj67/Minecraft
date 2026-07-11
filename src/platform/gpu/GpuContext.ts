@@ -21,7 +21,13 @@ const REQUIRED_FEATURES: GPUFeatureName[] = [
   // 'timestamp-query',  // For GpuTimestamps — request optionally
 ];
 
-const OPTIONAL_FEATURES: GPUFeatureName[] = [];
+const OPTIONAL_FEATURES: GPUFeatureName[] = [
+  "timestamp-query",
+  "depth-clip-control",
+  "texture-compression-bc", // Desktop DXT textures
+  "texture-compression-etc2", // Mobile textures
+  "indirect-first-instance", // For GPU-driven rendering (Phase 2+)
+];
 
 export class GpuContext {
   static adapterInfo: GPUAdapterInfo | null = null;
@@ -49,16 +55,8 @@ export class GpuContext {
       );
     }
 
-    this.adapterInfo = await Promise.try(() => adapter.info).catch(
-      () =>
-        ({
-          vendor: "Unknown",
-          architecture: "Unknown",
-          device: "Unknown",
-          description: "Unknown",
-        }) as GPUAdapterInfo,
-    );
-
+    const adapterInfo = adapter.info
+    this.adapterInfo = adapterInfo;
     Logger.info(
       `GPU Adapter: ${this.adapterInfo.vendor} / ${this.adapterInfo.device}`,
     );
@@ -110,7 +108,7 @@ export class GpuContext {
       device,
       context,
       format,
-      adapterInfo: this.adapterInfo,
+      adapterInfo,
       limits: device.limits,
       features: device.features,
     };

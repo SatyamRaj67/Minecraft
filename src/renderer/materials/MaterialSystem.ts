@@ -42,7 +42,7 @@ export class MaterialSystem {
   private destroyQueue: DestroyEntry[] = [];
 
   constructor(private device: GPUDevice) {
-    if (import.meta.env.DEV) {
+    if (__DEV__) {
       this.setupHMR();
     }
   }
@@ -135,11 +135,11 @@ export class MaterialSystem {
     desc: MaterialDescriptor,
   ): Promise<GPURenderPipeline> {
     const shaderModule = this.device.createShaderModule({
-      label: `shader: ${desc.name}`,
+      label: `shader:${desc.name}`,
       code: `${desc.vertSource}\n${desc.fragSource}`,
     });
 
-    if (import.meta.env.DEV) {
+    if (__DEV__) {
       const info = await shaderModule.getCompilationInfo();
       const errors = info.messages.filter((m) => m.type === "error");
 
