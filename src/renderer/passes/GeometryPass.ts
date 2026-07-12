@@ -118,7 +118,10 @@ export class GeometryPass implements RenderPass {
 
   onDestroy(): void {}
 
-  private buildPipeline(device: GPUDevice, format: GPUTextureFormat): GPURenderPipeline {
+  private buildPipeline(
+    device: GPUDevice,
+    format: GPUTextureFormat,
+  ): GPURenderPipeline {
     const shaderModule = device.createShaderModule({
       label: "terrain-shader",
       code: terrainVert + "\n" + terrainFrag,
@@ -161,7 +164,8 @@ export class GeometryPass implements RenderPass {
       },
       primitive: {
         topology: "triangle-list",
-        cullMode: "none",
+        cullMode: "back",
+        frontFace: "ccw",
       },
     });
   }

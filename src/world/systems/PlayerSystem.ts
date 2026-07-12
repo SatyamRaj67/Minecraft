@@ -13,7 +13,7 @@ import {
   T_YAW,
   transformMake,
 } from "./components/TransformComponent";
-import { EngineEvent, globalBus } from "@/core/ecs/events/EventBus";
+import { EngineEvent, globalBus } from "@/core/events/EventBus";
 import { V_VX, V_VY, V_VZ, velocityMake } from "./components/VelocityComponent";
 import { FrameStats } from "@/debug/FrameStats";
 import { Entity, entityIndex } from "@/core/ecs/Entity";

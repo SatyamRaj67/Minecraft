@@ -1,6 +1,6 @@
 // === KEY STATE ===
 
-import { EngineEvent, globalBus } from "@/core/ecs/events/EventBus";
+import { EngineEvent, globalBus } from "@/core/events/EventBus";
 import { Logger } from "@/debug/Logger";
 
 const KEY_UP = 0;

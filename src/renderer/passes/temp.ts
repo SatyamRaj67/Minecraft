@@ -47,40 +47,40 @@ export function createDebugCubeChunk(
   const hs = size / 2.0;
 
   // Top (+Y, norm 0)
-  addVert(-hs, hs, -hs, 0, 0, 0, 0);
-  addVert(-hs, hs, hs, 0, 1, 0, 0);
-  addVert(hs, hs, hs, 1, 1, 0, 0);
-  addVert(hs, hs, -hs, 1, 0, 0, 0);
+  addVert(-hs, hs, -hs, 0, 0, 108, 0);
+  addVert(-hs, hs, hs, 0, 1, 108, 0);
+  addVert(hs, hs, hs, 1, 1, 108, 0);
+  addVert(hs, hs, -hs, 1, 0, 108, 0);
 
   // Bottom (-Y, norm 1)
-  addVert(-hs, -hs, hs, 0, 0, 0, 1);
-  addVert(-hs, -hs, -hs, 0, 1, 0, 1);
-  addVert(hs, -hs, -hs, 1, 1, 0, 1);
-  addVert(hs, -hs, hs, 1, 0, 0, 1);
+  addVert(-hs, -hs, hs, 0, 0, 108, 1);
+  addVert(-hs, -hs, -hs, 0, 1, 108, 1);
+  addVert(hs, -hs, -hs, 1, 1, 108, 1);
+  addVert(hs, -hs, hs, 1, 0, 108, 1);
 
   // South (+Z, norm 2)
-  addVert(-hs, -hs, hs, 0, 1, 0, 2);
-  addVert(hs, -hs, hs, 1, 1, 0, 2);
-  addVert(hs, hs, hs, 1, 0, 0, 2);
-  addVert(-hs, hs, hs, 0, 0, 0, 2);
+  addVert(-hs, -hs, hs, 0, 1, 108, 2);
+  addVert(hs, -hs, hs, 1, 1, 108, 2);
+  addVert(hs, hs, hs, 1, 0, 108, 2);
+  addVert(-hs, hs, hs, 0, 0, 108, 2);
 
   // North (-Z, norm 3)
-  addVert(hs, -hs, -hs, 0, 1, 0, 3);
-  addVert(-hs, -hs, -hs, 1, 1, 0, 3);
-  addVert(-hs, hs, -hs, 1, 0, 0, 3);
-  addVert(hs, hs, -hs, 0, 0, 0, 3);
+  addVert(hs, -hs, -hs, 0, 1, 108, 3);
+  addVert(-hs, -hs, -hs, 1, 1, 108, 3);
+  addVert(-hs, hs, -hs, 1, 0, 108, 3);
+  addVert(hs, hs, -hs, 0, 0, 108, 3);
 
   // East (+X, norm 4)
-  addVert(hs, -hs, hs, 0, 1, 0, 4);
-  addVert(hs, -hs, -hs, 1, 1, 0, 4);
-  addVert(hs, hs, -hs, 1, 0, 0, 4);
-  addVert(hs, hs, hs, 0, 0, 0, 4);
+  addVert(hs, -hs, hs, 0, 1, 108, 4);
+  addVert(hs, -hs, -hs, 1, 1, 108, 4);
+  addVert(hs, hs, -hs, 1, 0, 108, 4);
+  addVert(hs, hs, hs, 0, 0, 108, 4);
 
   // West (-X, norm 5)
-  addVert(-hs, -hs, -hs, 0, 1, 0, 5);
-  addVert(-hs, -hs, hs, 1, 1, 0, 5);
-  addVert(-hs, hs, hs, 1, 0, 0, 5);
-  addVert(-hs, hs, -hs, 0, 0, 0, 5);
+  addVert(-hs, -hs, -hs, 0, 1, 108, 5);
+  addVert(-hs, -hs, hs, 1, 1, 108, 5);
+  addVert(-hs, hs, hs, 1, 0, 108, 5);
+  addVert(-hs, hs, -hs, 0, 0, 108, 5);
 
   // --- INDICES ---
   const indices = new Uint32Array(36);

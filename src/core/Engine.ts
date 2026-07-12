@@ -4,7 +4,7 @@ import { Logger } from "@/debug/Logger";
 import { GpuContext } from "@/platform/gpu/GpuContext";
 import { InputManager } from "@/platform/web/InputManager";
 import { Renderer } from "@/renderer/Renderer";
-import { EngineEvent, globalBus } from "./ecs/events/EventBus";
+import { EngineEvent, globalBus } from "./events/EventBus";
 import { System, topologicalSort } from "./ecs/System";
 import { DebugOverlay } from "@/debug/DebugOverlay";
 import { PlayerSystem } from "@/world/systems/PlayerSystem";

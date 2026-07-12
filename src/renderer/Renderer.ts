@@ -18,6 +18,7 @@ import { MaterialSystem } from "./materials/MaterialSystem";
 import { FrameStats } from "@/debug/FrameStats";
 import { TextureAtlasPacker } from "@assets/TextureAtlasPacker";
 import { createDebugCubeChunk } from "./passes/temp";
+import { AnimationSystem } from "@/assets/AnimationSystem";
 
 // === Camera State ===
 export interface CameraState {
@@ -34,6 +35,7 @@ export class Renderer {
   private geometryPass: GeometryPass;
   private materials: MaterialSystem;
   private atlas: TextureAtlasPacker;
+  private animSys: AnimationSystem;
 
   private cameraUBOs: GpuBuffer[] = [];
   private cameraUboFrame = 0;
@@ -86,6 +88,7 @@ export class Renderer {
     this.geometryPass = new GeometryPass();
     this.materials = new MaterialSystem(device);
     this.atlas = new TextureAtlasPacker();
+    this.animSys = new AnimationSystem();
   }
 
   async init(width: number, height: number): Promise<void> {
@@ -128,6 +131,8 @@ export class Renderer {
       addressModeV: "clamp-to-edge",
     });
 
+    this.animSys.init(this.device, atlasResult.layerMap);
+
     this.geometryPass.onInit(this.device, this.format);
 
     this.buildBindGroupLayouts();
@@ -160,14 +165,14 @@ export class Renderer {
   renderFrame(): void {
     this.materials.applyPendingReloads();
 
+    this.animSys.update(performance.now() / 1000);
+
     this.updateCameraMatrices();
 
     const uboSlot = this.cameraUBOs[this.cameraUboFrame % FRAMES_IN_FLIGHT];
     assert(uboSlot !== undefined, "Camera UBO ring not initialized");
     uboSlot.write(this.device, this.cameraUboData);
     this.cameraUboFrame++;
-
-
 
     this.graph.reset();
     this.graph.declareResource({
@@ -351,6 +356,7 @@ export class Renderer {
   destroy(): void {
     for (const ubo of this.cameraUBOs) ubo.destroy();
     for (const ubo of this.objectUBOs.values()) ubo.destroy();
+    this.animSys.destroy();
     this.graph.destroy();
     this.materials.destroy();
     this.geometryPass.onDestroy();
