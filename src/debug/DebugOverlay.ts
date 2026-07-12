@@ -80,6 +80,24 @@ export class DebugOverlay {
       { label: "VRAM est.", value: this.mbStr(raw["vramBytes"] ?? 0) },
       { label: "JS Heap", value: this.mbStr(raw["jsHeapBytes"] ?? 0) },
       {
+        label: "Cam Pos",
+        value: `${(raw["cameraX"] ?? 0).toFixed(1)}, ${(raw["cameraY"] ?? 0).toFixed(1)}, ${(raw["cameraZ"] ?? 0).toFixed(1)}`,
+      },
+      {
+        label: "Cam Rot",
+        value: `${(raw["cameraYaw"] ?? 0).toFixed(2)}, ${(raw["cameraPitch"] ?? 0).toFixed(2)}`,
+      },
+      {
+        label: "Pointer",
+        value: (raw["pointerLocked"] ?? 0) > 0 ? "LOCKED" : "FREE",
+        color: (raw["pointerLocked"] ?? 0) > 0 ? COLOR_GREEN : COLOR_YELLOW,
+      },
+      {
+        label: "Fly",
+        value: (raw["flyMode"] ?? 0) > 0 ? "ON" : "OFF",
+        color: (raw["flyMode"] ?? 0) > 0 ? COLOR_GREEN : COLOR_RED,
+      },
+      {
         label: "GC pauses",
         value: String(raw["gcPauses"] ?? 0),
         color: (raw["gcPauses"] ?? 0) > 0 ? COLOR_RED : COLOR_GREEN,

@@ -1,6 +1,7 @@
 // === KEY STATE ===
 
 import { EngineEvent, globalBus } from "@/core/ecs/events/EventBus";
+import { Logger } from "@/debug/Logger";
 
 const KEY_UP = 0;
 const KEY_DOWN = 1;
@@ -52,6 +53,21 @@ export class InputManager {
       const code = this.keyCode(e.code);
       this.keys[code] = KEY_JUST_PRESSED;
       globalBus.emit(EngineEvent.KEY_DOWN, { code: e.code, repeat: false });
+    }
+    this.pendingKeyDown.length = 0;
+
+    for (const e of this.pendingKeyUp) {
+      const code = this.keyCode(e.code);
+      this.keys[code] = KEY_JUST_RELEASED;
+      globalBus.emit(EngineEvent.KEY_UP, { code: e.code });
+    }
+    this.pendingKeyUp.length = 0;
+
+    if (this.mouseDX !== 0 || this.mouseDY !== 0) {
+      globalBus.emit(EngineEvent.MOUSE_MOVE, {
+        dx: this.mouseDX,
+        dy: this.mouseDY,
+      });
     }
   }
 
@@ -120,17 +136,17 @@ export class InputManager {
     };
     this.boundMouseDown = (e: MouseEvent) => {
       this.mouseButtons[e.button] = KEY_JUST_PRESSED;
-        globalBus.emit(EngineEvent.MOUSE_BUTTON, {
-          button: e.button,
-          pressed: true,
-        });
+      globalBus.emit(EngineEvent.MOUSE_BUTTON, {
+        button: e.button,
+        pressed: true,
+      });
     };
     this.boundMouseUp = (e: MouseEvent) => {
       this.mouseButtons[e.button] = KEY_JUST_RELEASED;
-        globalBus.emit(EngineEvent.MOUSE_BUTTON, {
-          button: e.button,
-          pressed: false,
-        });
+      globalBus.emit(EngineEvent.MOUSE_BUTTON, {
+        button: e.button,
+        pressed: false,
+      });
     };
     this.boundLockChange = () => {
       this.pointerLocked = document.pointerLockElement === this.canvas;

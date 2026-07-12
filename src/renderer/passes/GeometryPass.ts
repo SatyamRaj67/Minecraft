@@ -1,12 +1,26 @@
-import triangleVert from "../shaders/learn/triangle.vert.wgsl";
-import redFrag from "../shaders/learn/red.frag.wgsl";
 import { RenderPass } from "./RenderPass";
 import { Logger } from "@/debug/Logger";
 import {
-  createIndexBuffer,
-  createVertexBuffer,
-  GpuBuffer,
-} from "@/platform/gpu/GpuBuffer";
+  BindGroup,
+  GPU_COLOR_FORMAT,
+  GPU_DEPTH_FORMAT,
+  GPU_NORMAL_FORMAT,
+  TERRAIN_VERTEX_STRIDE_BYTES,
+} from "@/platform/gpu/GpuLimits";
+import { FrameStats } from "@/debug/FrameStats";
+
+import terrainVert from "../shaders/terrain/terrain.vert.wgsl";
+import terrainFrag from "../shaders/terrain/terrain.frag.wgsl";
+
+export interface ChunkDrawCall {
+  vertexBuffer: GPUBuffer;
+  indexBuffer: GPUBuffer;
+  indexCount: number;
+
+  /** Pre-computed model matrix for the chunk's origin (16 floats, column-major) */
+  // modelMatrix: Float32Array;
+  objectBindGroup: GPUBindGroup;
+}
 
 export class GeometryPass implements RenderPass {
   readonly name = "GeometryPass";
@@ -15,119 +29,119 @@ export class GeometryPass implements RenderPass {
   private device!: GPUDevice;
   private pipeline!: GPURenderPipeline;
 
-  private vbArray!: Float32Array;
-  private ibArray!: Uint16Array;
+  // ! ADDED FOR SIMPLICITY ONLY FOR NOW..
+  private drawCalls: ChunkDrawCall[] = [];
 
-  private vertexBuffer!: GpuBuffer;
-  private indexBuffer!: GpuBuffer;
+  frameBindGroup!: GPUBindGroup;
+  materialBindGroup!: GPUBindGroup;
 
   onInit(device: GPUDevice, _format: GPUTextureFormat): void {
     this.device = device;
-    this.pipeline = this.buildPipeline(device, _format);
-
-    this.vbArray = new Float32Array([
-      // POSITION (x, y, z, w)      // COLOR (r, g, b, a)
-      0.0,
-      0.5,
-      0.0,
-      1.0,
-      1.0,
-      0.0,
-      0.0,
-      1.0, // Vertex 0
-      -0.5,
-      -0.5,
-      0.0,
-      1.0,
-      0.0,
-      1.0,
-      0.0,
-      1.0, // Vertex 1
-      0.5,
-      -0.5,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      1.0,
-      1.0, // Vertex 2
-    ]);
-    this.ibArray = new Uint16Array([0, 1, 2, 0]);
-
-    this.vertexBuffer = createVertexBuffer(
-      device,
-      this.vbArray.byteLength,
-      `geometryPass_vb`,
-    );
-    this.indexBuffer = createIndexBuffer(
-      device,
-      this.ibArray.byteLength,
-      `geometryPass_ib`,
-    );
-    this.vertexBuffer.write(device, this.vbArray);
-    this.indexBuffer.write(device, this.ibArray);
+    this.pipeline = this.buildPipeline(device);
 
     Logger.info("GeometryPass initialized");
   }
 
+  getPipeline(): GPURenderPipeline {
+    return this.pipeline;
+  }
+
   onResize(_w: number, _h: number): void {}
+
+  setDrawCalls(drawCalls: ChunkDrawCall[]): void {
+    this.drawCalls = drawCalls;
+  }
 
   execute(
     encoder: GPUCommandEncoder,
     resources: ReadonlyMap<string, GPUTextureView>,
   ): void {
-    const swapChainView = resources.get("swapChain");
-    if (!swapChainView) {
-      Logger.error("GeometryPass: swapChain resource not found");
+    const albedoView = resources.get("gbuffer_albedo");
+    const normalView = resources.get("gbuffer_normal");
+    const depthView = resources.get("gbuffer_depth");
+
+    if (!albedoView || !normalView || !depthView) {
+      Logger.error("GeometryPass: missing required resource views");
+      return;
+    }
+
+    if (!this.frameBindGroup || !this.materialBindGroup) {
+      Logger.warn("GeometryPass: bind groups not yet assigned — skipping draw");
       return;
     }
 
     const renderPassDescriptor: GPURenderPassDescriptor = {
+      label: "GeometryPass",
       colorAttachments: [
         {
-          view: swapChainView,
-          clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 },
+          view: albedoView,
           loadOp: "clear",
           storeOp: "store",
+          clearValue: { r: 0.53, g: 0.81, b: 0.98, a: 1 },
+        },
+        {
+          view: normalView,
+          loadOp: "clear",
+          storeOp: "store",
+          clearValue: { r: 0.5, g: 0.5, b: 1.0, a: 1 },
         },
       ],
+      depthStencilAttachment: {
+        view: depthView,
+        depthLoadOp: "clear",
+        depthStoreOp: "store",
+        depthClearValue: 1.0,
+      },
     };
 
     const passEncoder = encoder.beginRenderPass(renderPassDescriptor);
     passEncoder.setPipeline(this.pipeline);
-    passEncoder.setVertexBuffer(0, this.vertexBuffer.buffer);
-    passEncoder.setIndexBuffer(this.indexBuffer.buffer, "uint16");
-    passEncoder.drawIndexed(3);
-    passEncoder.end();
+    passEncoder.setBindGroup(BindGroup.FRAME, this.frameBindGroup);
+    passEncoder.setBindGroup(BindGroup.MATERIAL, this.materialBindGroup);
 
-    this.lastDrawCallCount = 1;
+    this.lastDrawCallCount = 0;
+
+    for (const draw of this.drawCalls) {
+      passEncoder.setBindGroup(BindGroup.OBJECT, draw.objectBindGroup);
+      passEncoder.setVertexBuffer(0, draw.vertexBuffer);
+      passEncoder.setIndexBuffer(draw.indexBuffer, "uint32");
+      passEncoder.drawIndexed(draw.indexCount, 1, 0, 0, 0);
+
+      this.lastDrawCallCount++;
+      FrameStats.increment("chunkDraws");
+      FrameStats.increment("triangles", draw.indexCount / 3);
+    }
+
+    passEncoder.end();
+    FrameStats.set("drawCalls", this.lastDrawCallCount);
   }
 
   onDestroy(): void {}
 
-  private buildPipeline(
-    device: GPUDevice,
-    format: GPUTextureFormat,
-  ): GPURenderPipeline {
+  private buildPipeline(device: GPUDevice): GPURenderPipeline {
     const shaderModule = device.createShaderModule({
-      label: "triangle-shader",
-      code: triangleVert + "\n" + redFrag,
+      label: "terrain-shader",
+      code: terrainVert + "\n" + terrainFrag,
     });
 
     return device.createRenderPipeline({
+      label: "GeometryPass/Pipeline",
       layout: "auto",
       vertex: {
         module: shaderModule,
         entryPoint: "vs_main",
         buffers: [
           {
-            arrayStride: 8 * 4, // 4 floats for position + 4 floats for color
-            stepMode: "vertex",
+            arrayStride: TERRAIN_VERTEX_STRIDE_BYTES, // 28 bytes
             attributes: [
-              // position: vec4<f32> @ offset 0
-              { shaderLocation: 0, offset: 0, format: "float32x4" },
-              // color: vec4<f32> @ offset 16
-              { shaderLocation: 1, offset: 4 * 4, format: "float32x4" },
+              // position: vec3f @ offset 0
+              { shaderLocation: 0, offset: 0, format: "float32x3" },
+              // texcoord: vec2f @ offset 12
+              { shaderLocation: 1, offset: 12, format: "float32x2" },
+              // textureLayer: u32 @ offset 20
+              { shaderLocation: 2, offset: 20, format: "uint32" },
+              // packedNL: u32 @ offset 24
+              { shaderLocation: 3, offset: 24, format: "uint32" },
             ],
           },
         ],
@@ -135,10 +149,19 @@ export class GeometryPass implements RenderPass {
       fragment: {
         module: shaderModule,
         entryPoint: "fs_main",
-        targets: [{ format }],
+        targets: [
+          { format: GPU_COLOR_FORMAT }, // albedo
+          { format: GPU_NORMAL_FORMAT }, // normals
+        ],
+      },
+      depthStencil: {
+        format: GPU_DEPTH_FORMAT,
+        depthWriteEnabled: true,
+        depthCompare: "less",
       },
       primitive: {
         topology: "triangle-list",
+        cullMode: "none",
       },
     });
   }

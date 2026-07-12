@@ -8,7 +8,7 @@ struct FragIn {
     @location(1) worldNorm: vec3<f32>,
     @location(2) worldPos: vec3<f32>,
     @location(3) lightLevel: f32,
-    @location(4) texLayer: u32,
+    @location(4) @interpolate(flat) texLayer: u32,
 };
 
 struct FragOut {

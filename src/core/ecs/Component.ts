@@ -66,3 +66,7 @@ export const CChunkLoader = ComponentReg.register("ChunkLoader", 1);
 /** Camera yaw/pitch in radians.
  *  Layout: [yaw, pitch] = 2 floats */
 export const CCamera = ComponentReg.register("Camera", 2);
+
+export function componentMask(...schemas: ComponentSchema[]): bigint {
+  return schemas.reduce((mask, s) => mask | (1n << BigInt(s.id)), 0n);
+}

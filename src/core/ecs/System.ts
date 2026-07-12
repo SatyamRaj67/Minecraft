@@ -1,13 +1,15 @@
+import { World } from "./World";
+
 export interface System {
   readonly name: string;
   /**Other system names that must execute before this one */
   readonly dependencies: string[];
   /**Called once per rendered frame, dt is in seconds */
-  execute(dt: number): void;
+  execute(world: World, dt: number): void;
   /**Optional: called once on first registration. */
-  onInit?(): void;
+  onInit?(world: World): void;
   /**Optional: called on engine shutdown */
-  onDestroy?(): void;
+  onDestroy?(world: World): void;
 }
 
 // === Topological sort using Kahn's algorithm ===

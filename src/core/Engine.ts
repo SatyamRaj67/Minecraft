@@ -9,6 +9,8 @@ import { System, topologicalSort } from "./ecs/System";
 import { DebugOverlay } from "@/debug/DebugOverlay";
 import { PlayerSystem } from "@/world/systems/PlayerSystem";
 import { CameraSystem } from "@/world/systems/CameraSystem";
+import { World } from "./ecs/World";
+import { PhysicsSystem } from "@/world/systems/PhysicsSystem";
 
 export interface EngineConfig {
   canvas: HTMLCanvasElement;
@@ -16,6 +18,7 @@ export interface EngineConfig {
 }
 
 export class Engine {
+  private world: World = new World();
   private systems: System[] = [];
   private sortedSystems: System[] | null = null;
 
@@ -25,7 +28,7 @@ export class Engine {
   private debugOverlay!: DebugOverlay;
 
   // Game Systems
-  // private physics!: PhysicsSystem;
+  private physics!: PhysicsSystem;
   private player!: PlayerSystem;
   private camera!: CameraSystem;
 
@@ -50,9 +53,11 @@ export class Engine {
     await this.renderer.init(config.canvas.width, config.canvas.height);
 
     // === ECS systems ===
-    this.player = new PlayerSystem(this.input, this.renderer);
+    this.physics = new PhysicsSystem();
+    this.player = new PlayerSystem(this.input, this.renderer, this.physics, (x, z) => {});
     this.camera = new CameraSystem(this.renderer);
-
+    
+    this.registerSystem(this.physics);
     this.registerSystem(this.player);
     this.registerSystem(this.camera);
 
@@ -83,7 +88,7 @@ export class Engine {
 
     if (!this.sortedSystems) this.compileSystems();
     for (const system of this.sortedSystems ?? []) {
-      system.onInit?.();
+      system.onInit?.(this.world);
     }
 
     globalBus.emit(EngineEvent.ENGINE_INIT, {});
@@ -139,10 +144,12 @@ export class Engine {
     this.input.update();
 
     if (!this.sortedSystems) this.compileSystems();
+    this.world.flushQueries();
 
     for (const system of this.sortedSystems!) {
-      system.execute(dt);
+      system.execute(this.world, dt);
     }
+    this.world.flushDeferred();
 
     this.renderer.renderFrame();
 
@@ -159,7 +166,7 @@ export class Engine {
     this.stop();
 
     for (const system of this.sortedSystems ?? []) {
-      system.onDestroy?.();
+      system.onDestroy?.(this.world);
     }
 
     this.renderer.destroy();

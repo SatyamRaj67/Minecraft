@@ -1,4 +1,5 @@
 import { System } from "@/core/ecs/System";
+import { World } from "@/core/ecs/World";
 import { Logger } from "@/debug/Logger";
 import { Renderer } from "@/renderer/Renderer";
 
@@ -21,12 +22,12 @@ export class CameraSystem implements System {
 
   constructor(private renderer: Renderer) {}
 
-  onInit(): void {
+  onInit(_world: World): void {
     this.renderer.camera.fovY = DEFAULT_FOV_Y;
     Logger.info("CameraSystem: initialized");
   }
 
-  execute(dt: number): void {
+  execute(_world: World, dt: number): void {
     // === FOV Interpolation ===
     const fovDelta = this.targetFovY - this.currentFovY;
     this.currentFovY += fovDelta * Math.min(FOV_LERP_SPEED * dt, 1.0);

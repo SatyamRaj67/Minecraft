@@ -11,9 +11,14 @@ import {
   T_PY,
   T_PZ,
   T_YAW,
+  transformMake,
 } from "./components/TransformComponent";
 import { EngineEvent, globalBus } from "@/core/ecs/events/EventBus";
-import { V_VX, V_VY, V_VZ } from "./components/VelocityComponent";
+import { V_VX, V_VY, V_VZ, velocityMake } from "./components/VelocityComponent";
+import { FrameStats } from "@/debug/FrameStats";
+import { Entity, entityIndex } from "@/core/ecs/Entity";
+import { World } from "@/core/ecs/World";
+import { PhysicsSystem } from "./PhysicsSystem";
 
 // === Movement Constants ===
 const WALK_SPEED = 4.317; // m/s
@@ -24,12 +29,10 @@ const MOUSE_SENS = 0.0015; // rad per pixel
 
 export class PlayerSystem implements System {
   readonly name = "PlayerSystem";
-  // TODO: Include Physics System into the dependency..
-  readonly dependencies: string[] = [];
+  readonly dependencies: string[] = ["PhysicsSystem"];
 
-  // TODO: Fix this to include Entity when you add Entities..
-  private playerEntity: null = null;
-  private flyMode = false;
+  private playerEntity: Entity | null = null;
+  private flyMode = true;
   private spawnY = 80;
 
   private tBuf = new Float32Array(CTransform.stride);
@@ -38,9 +41,12 @@ export class PlayerSystem implements System {
   constructor(
     private input: InputManager,
     private renderer: Renderer,
+    private physics: PhysicsSystem,
+    private onPositionChanged?: (x: number, z: number) => void,
   ) {}
 
-  onInit(): void {
+  onInit(world: World): void {
+    this.playerEntity = this.spawnPlayer(world);
     Logger.info("PlayerSystem: initialized");
 
     globalBus.on(EngineEvent.MOUSE_BUTTON, ({ button, pressed }) => {
@@ -55,8 +61,12 @@ export class PlayerSystem implements System {
     });
   }
 
-  execute(dt: number): void {
-    if (this.playerEntity) return;
+  execute(world: World, dt: number): void {
+    if (!this.playerEntity) return;
+    const entity = this.playerEntity;
+
+    world.getComponent(entity, CTransform, this.tBuf);
+    world.getComponent(entity, CVelocity, this.vBuf);
 
     if (this.input.isPointerLocked) {
       const { dx, dy } = this.input.mouseDelta;
@@ -122,9 +132,14 @@ export class PlayerSystem implements System {
       this.vBuf[V_VY] = vy;
     } else {
       // Jump impulse
-      // TODO: JUMP IMPULSE
+      const grounded = this.physics.isGrounded(entityIndex(entity));
+      if (this.input.isKeyJustPressed("Space") && grounded) {
+        this.vBuf[V_VY] = JUMP_IMPULSE;
+      }
     }
-    // TODO: Implement World Components
+
+    world.setComponent(entity, CVelocity, this.vBuf);
+    world.setComponent(entity, CTransform, this.tBuf);
 
     // === Push Camera State to Renderer
     this.renderer.camera.position[0] = this.tBuf[T_PX]!;
@@ -133,20 +148,35 @@ export class PlayerSystem implements System {
     this.renderer.camera.yaw = yaw;
     this.renderer.camera.pitch = pitch;
 
-    // === Update Chunk Loader Position ===
-    // TODO: Implement this, but I am adding a simple prototype of what it looks like..
+    const pos = this.getPosition();
+    FrameStats.set("cameraX", pos[0]);
+    FrameStats.set("cameraY", pos[1]);
+    FrameStats.set("cameraZ", pos[2]);
+    FrameStats.set("cameraYaw", this.renderer.camera.yaw);
+    FrameStats.set("cameraPitch", this.renderer.camera.pitch);
+    FrameStats.set("pointerLocked", this.input.isPointerLocked ? 1 : 0);
+    FrameStats.set("flyMode", this.flyMode ? 1 : 0);
 
+    // === Update Chunk Loader Position ===
     const px = this.tBuf[T_PX]!;
     const pz = this.tBuf[T_PZ]!;
-
-    (
-      this as unknown as { _emitPos: (x: number, z: number) => void }
-    )._emitPos?.(px, pz);
+    this.onPositionChanged?.(px, pz);
   }
 
-  // TODO: onDestroy
+  onDestroy(world: World): void {
+    if (this.playerEntity) world.despawn(this.playerEntity);
+  }
 
   getPosition(): [number, number, number] {
     return [this.tBuf[T_PX]!, this.tBuf[T_PY]!, this.tBuf[T_PZ]!];
+  }
+
+  private spawnPlayer(world: World): Entity {
+    const entity = world.spawn();
+    const t = transformMake(8, this.spawnY, 9, 0, -0.3);
+    const v = velocityMake();
+    world.addComponent(entity, CTransform, t);
+    world.addComponent(entity, CVelocity, v);
+    return entity;
   }
 }
