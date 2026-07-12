@@ -97,21 +97,21 @@ export class PlayerSystem implements System {
 
     // Forward/back: move along camera's horizontal facing direction
     if (this.input.isKeyDown("KeyW") || this.input.isKeyDown("ArrowUp")) {
-      moveX += -sinYaw;
+      moveX += sinYaw;
       moveZ += -cosYaw;
     }
     if (this.input.isKeyDown("KeyS") || this.input.isKeyDown("ArrowDown")) {
-      moveX += sinYaw;
+      moveX += -sinYaw;
       moveZ += cosYaw;
     }
     // Strafe
     if (this.input.isKeyDown("KeyA") || this.input.isKeyDown("ArrowLeft")) {
       moveX += -cosYaw;
-      moveZ += sinYaw;
+      moveZ += -sinYaw;
     }
     if (this.input.isKeyDown("KeyD") || this.input.isKeyDown("ArrowRight")) {
       moveX += cosYaw;
-      moveZ += -sinYaw;
+      moveZ += sinYaw;
     }
 
     // Normalize diagonal movement
