@@ -76,6 +76,7 @@ export class GpuContext {
       requiredFeatures: enabledFeatures,
       requiredLimits: {
         maxTextureDimension2D: 4096,
+        maxTextureArrayLayers: adapter.limits.maxTextureArrayLayers,
         maxBufferSize: 256 * 1024 * 1024, // 256 MB
         maxStorageBufferBindingSize: 128 * 1024 * 1024, // 128 MB
         maxComputeWorkgroupsPerDimension: 65535,

@@ -8,6 +8,7 @@ import { EngineEvent, globalBus } from "./ecs/events/EventBus";
 import { System, topologicalSort } from "./ecs/System";
 import { DebugOverlay } from "@/debug/DebugOverlay";
 import { PlayerSystem } from "@/world/systems/PlayerSystem";
+import { CameraSystem } from "@/world/systems/CameraSystem";
 
 export interface EngineConfig {
   canvas: HTMLCanvasElement;
@@ -26,7 +27,7 @@ export class Engine {
   // Game Systems
   // private physics!: PhysicsSystem;
   private player!: PlayerSystem;
-  // private camera! CameraSystem;
+  private camera!: CameraSystem;
 
   private rafHandle: number | null = null;
   private lastTimestamp: number = 0;
@@ -50,8 +51,10 @@ export class Engine {
 
     // === ECS systems ===
     this.player = new PlayerSystem(this.input, this.renderer);
+    this.camera = new CameraSystem(this.renderer);
 
     this.registerSystem(this.player);
+    this.registerSystem(this.camera);
 
     // === Debug Overlay ===
     this.debugOverlay = new DebugOverlay(
@@ -78,6 +81,7 @@ export class Engine {
     });
     resizeObserver.observe(config.canvas);
 
+    if (!this.sortedSystems) this.compileSystems();
     for (const system of this.sortedSystems ?? []) {
       system.onInit?.();
     }
