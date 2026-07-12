@@ -64,6 +64,11 @@ export class DebugOverlay {
     const leftLines: Array<{ label: string; value: string; color?: string }> = [
       { label: "Frame", value: `#${snap.frameNumber}`, color: COLOR_GREY },
       {
+        label: "FPS",
+        value: this.fpsStr(1000 / (smooth["cpuFrameMs"] ?? 0)),
+        color: this.frameColor(smooth["fps"] ?? 0),
+      },
+      {
         label: "CPU",
         value: this.msStr(smooth["cpuFrameMs"] ?? 0),
         color: this.frameColor(smooth["cpuFrameMs"] ?? 0),
@@ -171,6 +176,10 @@ export class DebugOverlay {
 
   private mbStr(bytes: number): string {
     return (bytes / 1024 / 1024).toFixed(1) + "MB";
+  }
+
+  private fpsStr(fps: number): string {
+    return fps.toFixed(1) + " FPS";
   }
 
   private frameColor(ms: number): string {

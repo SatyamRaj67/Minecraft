@@ -17,6 +17,7 @@ import { createUniformBuffer, GpuBuffer } from "@/platform/gpu/GpuBuffer";
 import { MaterialSystem } from "./materials/MaterialSystem";
 import { FrameStats } from "@/debug/FrameStats";
 import { TextureAtlasPacker } from "@assets/TextureAtlasPacker";
+import { createDebugCubeChunk } from "./passes/temp";
 
 // === Camera State ===
 export interface CameraState {
@@ -69,7 +70,7 @@ export class Renderer {
 
   camera: CameraState = {
     position: vec3.create(0, 80, 0),
-    yaw: 0,
+    yaw: Math.PI / 2,
     pitch: 0,
     fovY: Math.PI / 3,
     near: 0.1,
@@ -134,11 +135,11 @@ export class Renderer {
     this.rebuildFrameBindGroup();
     this.rebuildMaterialBindGroup();
 
-    // const debugChunk = createDebugCubeChunk(
-    //   this.device,
-    //   this.objectBindGroupLayout,
-    // );
-    // this.debugDrawCalls = [debugChunk];
+    const debugChunk = createDebugCubeChunk(
+      this.device,
+      this.objectBindGroupLayout,
+    );
+    this.debugDrawCalls = [debugChunk];
     this.geometryPass.setDrawCalls(this.debugDrawCalls);
 
     this.graph.updateSwapchainSize(width, height);
@@ -166,11 +167,11 @@ export class Renderer {
     uboSlot.write(this.device, this.cameraUboData);
     this.cameraUboFrame++;
 
-    // const drawList = ;
+
 
     this.graph.reset();
     this.graph.declareResource({
-      handle: "gbuffer_albedo",
+      handle: "swapchain",
       format: GPU_COLOR_FORMAT,
     });
     this.graph.declareResource({
@@ -187,7 +188,7 @@ export class Renderer {
       name: "GeometryPass",
       pass: this.geometryPass,
       reads: [],
-      writes: ["gbuffer_albedo", "gbuffer_normal", "gbuffer_depth"],
+      writes: ["swapchain", "gbuffer_normal", "gbuffer_depth"],
     });
 
     this.graph.compile();

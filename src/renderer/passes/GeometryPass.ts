@@ -18,7 +18,7 @@ export interface ChunkDrawCall {
   indexCount: number;
 
   /** Pre-computed model matrix for the chunk's origin (16 floats, column-major) */
-  // modelMatrix: Float32Array;
+  modelMatrix: Float32Array;
   objectBindGroup: GPUBindGroup;
 }
 
@@ -37,7 +37,7 @@ export class GeometryPass implements RenderPass {
 
   onInit(device: GPUDevice, _format: GPUTextureFormat): void {
     this.device = device;
-    this.pipeline = this.buildPipeline(device);
+    this.pipeline = this.buildPipeline(device, _format);
 
     Logger.info("GeometryPass initialized");
   }
@@ -56,7 +56,7 @@ export class GeometryPass implements RenderPass {
     encoder: GPUCommandEncoder,
     resources: ReadonlyMap<string, GPUTextureView>,
   ): void {
-    const albedoView = resources.get("gbuffer_albedo");
+    const albedoView = resources.get("swapchain");
     const normalView = resources.get("gbuffer_normal");
     const depthView = resources.get("gbuffer_depth");
 
@@ -118,7 +118,7 @@ export class GeometryPass implements RenderPass {
 
   onDestroy(): void {}
 
-  private buildPipeline(device: GPUDevice): GPURenderPipeline {
+  private buildPipeline(device: GPUDevice, format: GPUTextureFormat): GPURenderPipeline {
     const shaderModule = device.createShaderModule({
       label: "terrain-shader",
       code: terrainVert + "\n" + terrainFrag,
@@ -150,7 +150,7 @@ export class GeometryPass implements RenderPass {
         module: shaderModule,
         entryPoint: "fs_main",
         targets: [
-          { format: GPU_COLOR_FORMAT }, // albedo
+          { format: format }, // albedo
           { format: GPU_NORMAL_FORMAT }, // normals
         ],
       },

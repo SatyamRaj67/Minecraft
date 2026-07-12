@@ -224,10 +224,10 @@ export class RenderGraph {
 
     // Build resource views
     const resourceViews = new Map<ResourceHandle, GPUTextureView>();
-    resourceViews.set("swapChain", swapTarget);
+    resourceViews.set("swapchain", swapTarget);
 
     for (const [handle, decl] of this.decls) {
-      if (handle === "swapChain") continue; // already set
+      if (handle === "swapchain") continue; // already set
       const { view } = this.pool.acquire(
         this.device,
         decl.format ?? "rgba16float",
@@ -263,13 +263,9 @@ export class RenderGraph {
     if (width !== this.swapWidth || height !== this.swapHeight) {
       this.swapWidth = width;
       this.swapHeight = height;
-      this.pool.destroy(); // Recreate all transient textures on next frame
+      this.pool.destroy();
       this.pool = new TransientPool();
     }
-  }
-
-  dump(): string {
-    return this._dump;
   }
 
   destroy(): void {

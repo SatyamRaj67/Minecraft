@@ -52,7 +52,7 @@ export class PhysicsSystem implements System {
 
       const grounded = this.groundedMap.get(entityIndex(entity)) ?? false;
       if (!grounded) {
-        vy -= GRAVITY * dt;
+        // vy -= GRAVITY * dt;
         if (vy < TERMINAL_VEL_Y) vy = TERMINAL_VEL_Y;
       }
 
