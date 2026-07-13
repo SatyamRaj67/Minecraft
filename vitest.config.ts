@@ -25,7 +25,13 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@/": resolve(__dirname, "src/"),
+      "@/": resolve(__dirname, "./src/"),
+      '@/core':      resolve(__dirname, './src/core'),
+      '@/platform':  resolve(__dirname, './src/platform'),
+      '@/renderer':  resolve(__dirname, './src/renderer'),
+      '@/world':     resolve(__dirname, './src/world'),
+      '@/assets':    resolve(__dirname, './src/assets'),
+      '@/debug':     resolve(__dirname, './src/debug'),
     },
   },
   define: {

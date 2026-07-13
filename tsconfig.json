@@ -7,11 +7,16 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
     "exactOptionalPropertyTypes": true,
+
     "isolatedModules": true,
     "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "sourceMap": true,
+    "noEmit": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {

@@ -6,7 +6,7 @@ const FRAME_MS_GREEN = 10; // < 10ms: good
 const FRAME_MS_YELLOW = 16; // < 14ms: acceptable
 //  >14ms: red (approaching over 16.6ms budget)
 
-const PANEL_BG = "#1e1e1e";
+const PANEL_BG = "#1e1e1edd";
 const COLOR_GREEN = "#90be6d";
 const COLOR_YELLOW = "#f9c74f";
 const COLOR_RED = "#f94144";

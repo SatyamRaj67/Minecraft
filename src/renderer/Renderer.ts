@@ -19,6 +19,7 @@ import { FrameStats } from "@/debug/FrameStats";
 import { TextureAtlasPacker } from "@assets/TextureAtlasPacker";
 import { createDebugCubeChunk } from "./passes/temp";
 import { AnimationSystem } from "@/assets/AnimationSystem";
+import { CompositePass } from "./passes/CompositePass";
 
 // === Camera State ===
 export interface CameraState {
@@ -33,6 +34,7 @@ export interface CameraState {
 export class Renderer {
   private graph: RenderGraph;
   private geometryPass: GeometryPass;
+  private compositePass: CompositePass;
   private materials: MaterialSystem;
   private atlas: TextureAtlasPacker;
   private animSys: AnimationSystem;
@@ -86,6 +88,7 @@ export class Renderer {
   ) {
     this.graph = new RenderGraph(device, 1, 1);
     this.geometryPass = new GeometryPass();
+    this.compositePass = new CompositePass();
     this.materials = new MaterialSystem(device);
     this.atlas = new TextureAtlasPacker();
     this.animSys = new AnimationSystem();
@@ -134,6 +137,7 @@ export class Renderer {
     this.animSys.init(this.device, atlasResult.layerMap);
 
     this.geometryPass.onInit(this.device, this.format);
+    this.compositePass.onInit(this.device, this.format);
 
     this.buildBindGroupLayouts();
 
@@ -177,6 +181,10 @@ export class Renderer {
     this.graph.reset();
     this.graph.declareResource({
       handle: "swapchain",
+      format: this.format,
+    });
+    this.graph.declareResource({
+      handle: "gbuffer_albedo",
       format: GPU_COLOR_FORMAT,
     });
     this.graph.declareResource({
@@ -193,7 +201,14 @@ export class Renderer {
       name: "GeometryPass",
       pass: this.geometryPass,
       reads: [],
-      writes: ["swapchain", "gbuffer_normal", "gbuffer_depth"],
+      writes: ["gbuffer_albedo", "gbuffer_normal", "gbuffer_depth"],
+    });
+
+    this.graph.addPass({
+      name: "CompositePass",
+      pass: this.compositePass,
+      reads: ["gbuffer_albedo"],
+      writes: ["swapchain"],
     });
 
     this.graph.compile();

@@ -64,14 +64,23 @@ class TransientPool {
     // No compatible texture found, create a new one
     const isDepth = format.startsWith("depth") || format.startsWith("stencil");
 
+    // Use numeric flag values directly — GPUTextureUsage global is not available
+    // in test environments (jsdom). Values are stable per the WebGPU spec:
+    //   COPY_SRC            = 0x01
+    //   COPY_DST            = 0x02
+    //   TEXTURE_BINDING     = 0x04
+    //   STORAGE_BINDING     = 0x08
+    //   RENDER_ATTACHMENT   = 0x10
+    const TEXTURE_BINDING = 0x04;
+    const RENDER_ATTACHMENT = 0x10;
+    const COPY_SRC = 0x01;
+
     const texture = device.createTexture({
       size: { width, height, depthOrArrayLayers: layers },
       format,
       usage: isDepth
-        ? GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING
-        : GPUTextureUsage.RENDER_ATTACHMENT |
-          GPUTextureUsage.TEXTURE_BINDING |
-          GPUTextureUsage.COPY_SRC,
+        ? RENDER_ATTACHMENT | TEXTURE_BINDING
+        : RENDER_ATTACHMENT | TEXTURE_BINDING | COPY_SRC,
       label: `transient:${label}`,
     });
     const view = texture.createView();
@@ -266,6 +275,10 @@ export class RenderGraph {
       this.pool.destroy();
       this.pool = new TransientPool();
     }
+  }
+
+  dump(): string {
+    return this._dump
   }
 
   destroy(): void {

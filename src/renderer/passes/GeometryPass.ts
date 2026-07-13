@@ -37,7 +37,7 @@ export class GeometryPass implements RenderPass {
 
   onInit(device: GPUDevice, _format: GPUTextureFormat): void {
     this.device = device;
-    this.pipeline = this.buildPipeline(device, _format);
+    this.pipeline = this.buildPipeline(device);
 
     Logger.info("GeometryPass initialized");
   }
@@ -56,7 +56,7 @@ export class GeometryPass implements RenderPass {
     encoder: GPUCommandEncoder,
     resources: ReadonlyMap<string, GPUTextureView>,
   ): void {
-    const albedoView = resources.get("swapchain");
+    const albedoView = resources.get("gbuffer_albedo");
     const normalView = resources.get("gbuffer_normal");
     const depthView = resources.get("gbuffer_depth");
 
@@ -119,8 +119,7 @@ export class GeometryPass implements RenderPass {
   onDestroy(): void {}
 
   private buildPipeline(
-    device: GPUDevice,
-    format: GPUTextureFormat,
+    device: GPUDevice
   ): GPURenderPipeline {
     const shaderModule = device.createShaderModule({
       label: "terrain-shader",
@@ -153,7 +152,7 @@ export class GeometryPass implements RenderPass {
         module: shaderModule,
         entryPoint: "fs_main",
         targets: [
-          { format: format }, // albedo
+          { format: GPU_COLOR_FORMAT }, // albedo
           { format: GPU_NORMAL_FORMAT }, // normals
         ],
       },

@@ -82,6 +82,9 @@ export class World {
     return (this.generations[idx] ?? 0) === entityGeneration(entity);
   }
 
+  get entityCount(): number {
+    return this.records.size;
+  }
   //   === Component Management ===
   addComponent(
     entity: Entity,
