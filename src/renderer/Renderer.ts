@@ -11,15 +11,19 @@ import {
   GPU_DEPTH_FORMAT,
   GPU_NORMAL_FORMAT,
   MaterialBinding,
+  OBJECT_UBO_SIZE,
+  ObjectBinding,
 } from "@/platform/gpu/GpuLimits";
 import { RenderGraph } from "./graph/RenderGraph";
 import { createUniformBuffer, GpuBuffer } from "@/platform/gpu/GpuBuffer";
 import { MaterialSystem } from "./materials/MaterialSystem";
 import { FrameStats } from "@/debug/FrameStats";
 import { TextureAtlasPacker } from "@assets/TextureAtlasPacker";
-import { createDebugCubeChunk } from "./passes/temp";
 import { AnimationSystem } from "@/assets/AnimationSystem";
 import { CompositePass } from "./passes/CompositePass";
+import { ChunkManager } from "@/world/chunk/ChunkManager";
+import { chunkKey } from "@/world/chunk/Chunk";
+import { Frustum } from "@/core/math/Frustum";
 
 // === Camera State ===
 export interface CameraState {
@@ -38,6 +42,7 @@ export class Renderer {
   private materials: MaterialSystem;
   private atlas: TextureAtlasPacker;
   private animSys: AnimationSystem;
+  private frustum: Frustum = new Frustum();
 
   private cameraUBOs: GpuBuffer[] = [];
   private cameraUboFrame = 0;
@@ -51,16 +56,14 @@ export class Renderer {
 
   // Material bind group layout (group 1) — texture array + sampler
   private materialBindGroup!: GPUBindGroup;
-  private atlasView!: GPUTextureView;
-  private atlasSampler!: GPUSampler;
 
   // Per-chunk object UBOs and bind groups (group 2) — model matrices
   private objectUBOs = new Map<number, GpuBuffer>(); // chunkKey → UBO
   private objectBindGroups = new Map<number, GPUBindGroup>(); // chunkKey → BG
   private objectBindGroupLayout!: GPUBindGroupLayout;
 
-  // ! TEMP
-  private debugDrawCalls: ChunkDrawCall[] = [];
+  private atlasView!: GPUTextureView;
+  private atlasSampler!: GPUSampler;
 
   private viewMatrix = mat4.create();
   private projMatrix = mat4.create();
@@ -144,13 +147,6 @@ export class Renderer {
     this.rebuildFrameBindGroup();
     this.rebuildMaterialBindGroup();
 
-    const debugChunk = createDebugCubeChunk(
-      this.device,
-      this.objectBindGroupLayout,
-    );
-    this.debugDrawCalls = [debugChunk];
-    this.geometryPass.setDrawCalls(this.debugDrawCalls);
-
     this.graph.updateSwapchainSize(width, height);
     Logger.info(`Renderer: initialized ${width}x${height}`);
   }
@@ -166,7 +162,7 @@ export class Renderer {
   }
 
   // === Render Frame ===
-  renderFrame(): void {
+  renderFrame(chunkManager: ChunkManager): void {
     this.materials.applyPendingReloads();
 
     this.animSys.update(performance.now() / 1000);
@@ -177,6 +173,11 @@ export class Renderer {
     assert(uboSlot !== undefined, "Camera UBO ring not initialized");
     uboSlot.write(this.device, this.cameraUboData);
     this.cameraUboFrame++;
+
+    this.syncChunkBindGroups(chunkManager);
+
+    const drawList = chunkManager.buildDrawList(this.frustum);
+    this.geometryPass.visibleChunks = drawList;
 
     this.graph.reset();
     this.graph.declareResource({
@@ -247,6 +248,7 @@ export class Renderer {
 
     mat4.lookAt(this.eye, this.center, this.up, this.viewMatrix);
     mat4.multiply(this.projMatrix, this.viewMatrix, this.vpMatrix);
+    this.frustum.extractFromVP(this.vpMatrix)
 
     // Pack UBO:
     // view@0(16f),
@@ -315,6 +317,44 @@ export class Renderer {
     });
 
     this.geometryPass.materialBindGroup = this.materialBindGroup;
+  }
+
+  private syncChunkBindGroups(chunkManager: ChunkManager): void {
+    const needing = chunkManager.getChunksWithoutBindGroups();
+    for (const { cx, cz, modelMatrix } of needing) {
+      const key = chunkKey(cx, cz);
+
+      let ubo = this.objectUBOs.get(key);
+      if (!ubo) {
+        ubo = createUniformBuffer(
+          this.device,
+          OBJECT_UBO_SIZE,
+          `ObjectUBO_${cx}_${cz}`,
+        );
+        this.objectUBOs.set(key, ubo);
+      }
+
+      const data: Float32Array<ArrayBuffer> = new Float32Array(
+        OBJECT_UBO_SIZE / 4,
+      );
+      data.set(modelMatrix, 0);
+      data.set(modelMatrix, 16); // duplicate for padding/alignment
+      ubo.write(this.device, data);
+
+      const bg = this.device.createBindGroup({
+        label: `ObjectBindGroup_${cx}_${cz}`,
+        layout: this.objectBindGroupLayout,
+        entries: [
+          {
+            binding: ObjectBinding.MODEL_UBO,
+            resource: { buffer: ubo.buffer },
+          },
+        ],
+      });
+
+      this.objectBindGroups.set(key, bg);
+      chunkManager.registerObjectBindGroup(cx, cz, bg);
+    }
   }
 
   // === Helpers ===

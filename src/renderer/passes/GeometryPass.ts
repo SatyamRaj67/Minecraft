@@ -29,9 +29,7 @@ export class GeometryPass implements RenderPass {
   private device!: GPUDevice;
   private pipeline!: GPURenderPipeline;
 
-  // ! ADDED FOR SIMPLICITY ONLY FOR NOW..
-  private drawCalls: ChunkDrawCall[] = [];
-
+  visibleChunks: ChunkDrawCall[] = [];
   frameBindGroup!: GPUBindGroup;
   materialBindGroup!: GPUBindGroup;
 
@@ -47,11 +45,7 @@ export class GeometryPass implements RenderPass {
   }
 
   onResize(_w: number, _h: number): void {}
-
-  setDrawCalls(drawCalls: ChunkDrawCall[]): void {
-    this.drawCalls = drawCalls;
-  }
-
+  
   execute(
     encoder: GPUCommandEncoder,
     resources: ReadonlyMap<string, GPUTextureView>,
@@ -101,11 +95,11 @@ export class GeometryPass implements RenderPass {
 
     this.lastDrawCallCount = 0;
 
-    for (const draw of this.drawCalls) {
+    for (const draw of this.visibleChunks) {
       passEncoder.setBindGroup(BindGroup.OBJECT, draw.objectBindGroup);
       passEncoder.setVertexBuffer(0, draw.vertexBuffer);
       passEncoder.setIndexBuffer(draw.indexBuffer, "uint32");
-      passEncoder.drawIndexed(draw.indexCount, 1, 0, 0, 0);
+      passEncoder.drawIndexed(draw.indexCount);
 
       this.lastDrawCallCount++;
       FrameStats.increment("chunkDraws");
@@ -118,6 +112,7 @@ export class GeometryPass implements RenderPass {
 
   onDestroy(): void {}
 
+  // === Private Helpers ===
   private buildPipeline(
     device: GPUDevice
   ): GPURenderPipeline {

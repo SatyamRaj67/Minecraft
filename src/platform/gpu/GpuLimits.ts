@@ -72,3 +72,4 @@ export const FRAMES_IN_FLIGHT = 3;
 
 // ! CHANGED FROM 256 IN ORIGINAL TO 288
 export const CAMERA_UBO_SIZE = 288; // 2× mat4 + extras, padded to 256
+export const OBJECT_UBO_SIZE = 128; // 2x mat4 (model + normal matrix)

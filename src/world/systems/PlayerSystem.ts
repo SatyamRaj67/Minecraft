@@ -21,8 +21,8 @@ import { World } from "@/core/ecs/World";
 import { PhysicsSystem } from "./PhysicsSystem";
 
 // === Movement Constants ===
-const WALK_SPEED = 4.317; // m/s
-const SPRINT_SPEED = 5.612; // m/s
+const WALK_SPEED = 8; // m/s
+const SPRINT_SPEED = 16; // m/s
 const FLY_SPEED = 10.0; // m/s
 const JUMP_IMPULSE = 8.4; // m/s upward
 const MOUSE_SENS = 0.0015; // rad per pixel
@@ -32,8 +32,8 @@ export class PlayerSystem implements System {
   readonly dependencies: string[] = ["PhysicsSystem"];
 
   private playerEntity: Entity | null = null;
-  private flyMode = true;
-  private spawnY = 80;
+  private flyMode = false;
+  private spawnY = 2;
 
   private tBuf = new Float32Array(CTransform.stride);
   private vBuf = new Float32Array(CVelocity.stride);
@@ -138,6 +138,7 @@ export class PlayerSystem implements System {
       }
     }
 
+    this.physics.gravity = !this.flyMode;
     world.setComponent(entity, CVelocity, this.vBuf);
     world.setComponent(entity, CTransform, this.tBuf);
 
@@ -152,9 +153,6 @@ export class PlayerSystem implements System {
     FrameStats.set("cameraX", pos[0]);
     FrameStats.set("cameraY", pos[1]);
     FrameStats.set("cameraZ", pos[2]);
-    FrameStats.set("cameraYaw", this.renderer.camera.yaw);
-    FrameStats.set("cameraPitch", this.renderer.camera.pitch);
-    FrameStats.set("pointerLocked", this.input.isPointerLocked ? 1 : 0);
     FrameStats.set("flyMode", this.flyMode ? 1 : 0);
 
     // === Update Chunk Loader Position ===

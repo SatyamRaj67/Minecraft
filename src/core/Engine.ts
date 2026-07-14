@@ -11,6 +11,9 @@ import { PlayerSystem } from "@/world/systems/PlayerSystem";
 import { CameraSystem } from "@/world/systems/CameraSystem";
 import { World } from "./ecs/World";
 import { PhysicsSystem } from "@/world/systems/PhysicsSystem";
+import { ChunkManager } from "@/world/chunk/ChunkManager";
+import { SimpleMesher } from "./temp";
+import { chunkKey } from "@/world/chunk/Chunk";
 
 export interface EngineConfig {
   canvas: HTMLCanvasElement;
@@ -25,6 +28,7 @@ export class Engine {
   // Subsystems
   private renderer!: Renderer;
   private input!: InputManager;
+  private chunks!: ChunkManager;
   private debugOverlay!: DebugOverlay;
 
   // Game Systems
@@ -49,14 +53,21 @@ export class Engine {
     // === Subsystems ===
     this.input = new InputManager(config.canvas);
 
+    this.chunks = new ChunkManager(gpu.device);
+
     this.renderer = new Renderer(gpu.device, gpu.context, gpu.format);
     await this.renderer.init(config.canvas.width, config.canvas.height);
 
     // === ECS systems ===
-    this.physics = new PhysicsSystem();
-    this.player = new PlayerSystem(this.input, this.renderer, this.physics, (x, z) => {});
+    this.physics = new PhysicsSystem(this.chunks);
+    this.player = new PlayerSystem(
+      this.input,
+      this.renderer,
+      this.physics,
+      (x, z) => this.chunks.setPlayerPosition(x, z),
+    );
     this.camera = new CameraSystem(this.renderer);
-    
+
     this.registerSystem(this.physics);
     this.registerSystem(this.player);
     this.registerSystem(this.camera);
@@ -90,6 +101,8 @@ export class Engine {
     for (const system of this.sortedSystems ?? []) {
       system.onInit?.(this.world);
     }
+
+    this.chunks.setPlayerPosition(8, 8);
 
     globalBus.emit(EngineEvent.ENGINE_INIT, {});
     Logger.info("Engine: initialization complete");
@@ -151,7 +164,25 @@ export class Engine {
     }
     this.world.flushDeferred();
 
-    this.renderer.renderFrame();
+    this.chunks.update((cx, cz) => {
+      const meshResult = SimpleMesher.generateFlatChunk(cx, cz);
+
+      const key = chunkKey(cx, cz);
+      const chunk = (this.chunks as any).chunks.get(key);
+
+      if (chunk) {
+        for (let x = 0; x < 16; x++) {
+          for (let z = 0; z < 16; z++) {
+            // Fill Y=0 with Dirt (ID 4)
+            chunk.blocks[0 * 256 + z * 16 + x] = 4;
+          }
+        }
+      }
+
+      this.chunks.receiveMesh(meshResult);
+    });
+
+    this.renderer.renderFrame(this.chunks);
 
     if (__DEV__) {
       this.debugOverlay.render();
@@ -168,7 +199,7 @@ export class Engine {
     for (const system of this.sortedSystems ?? []) {
       system.onDestroy?.(this.world);
     }
-
+    this.chunks.destroy();
     this.renderer.destroy();
     this.input.destroy();
     this.debugOverlay.destroy();

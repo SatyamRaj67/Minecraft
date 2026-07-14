@@ -89,18 +89,14 @@ export class DebugOverlay {
         value: `${(raw["cameraX"] ?? 0).toFixed(1)}, ${(raw["cameraY"] ?? 0).toFixed(1)}, ${(raw["cameraZ"] ?? 0).toFixed(1)}`,
       },
       {
-        label: "Cam Rot",
-        value: `${(raw["cameraYaw"] ?? 0).toFixed(2)}, ${(raw["cameraPitch"] ?? 0).toFixed(2)}`,
-      },
-      {
-        label: "Pointer",
-        value: (raw["pointerLocked"] ?? 0) > 0 ? "LOCKED" : "FREE",
-        color: (raw["pointerLocked"] ?? 0) > 0 ? COLOR_GREEN : COLOR_YELLOW,
-      },
-      {
-        label: "Fly",
+        label: "Fly [F] ",
         value: (raw["flyMode"] ?? 0) > 0 ? "ON" : "OFF",
         color: (raw["flyMode"] ?? 0) > 0 ? COLOR_GREEN : COLOR_RED,
+      },
+      {
+        label: "Colide [C]",
+        value: (raw["collision"] ?? 0) > 0 ? "ON" : "OFF",
+        color: (raw["collision"] ?? 0) > 0 ? COLOR_GREEN : COLOR_RED,
       },
       {
         label: "GC pauses",
