@@ -69,10 +69,8 @@ export class PhysicsSystem implements System {
         vy = vBuf[V_VY]!,
         vz = vBuf[V_VZ]!;
 
-      const grounded = this.collision
-        ? this.aabbCollidesWorld(px, py - 0.01, pz)
-        : false;
-      if (!grounded && this.gravity) {
+      //  const grounded = this.groundedMap.get(entityIndex(entity)) ?? false;
+      if (this.gravity) {
         vy -= GRAVITY * dt;
         if (vy < TERMINAL_VEL_Y) vy = TERMINAL_VEL_Y;
       }

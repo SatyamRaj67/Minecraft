@@ -27,8 +27,8 @@ export interface ChunkMeshResult {
   chunkZ: number;
 }
 
-const MAX_UPLOADS_PER_FRAME = 2;
-const MAX_UNLOADS_PER_FRAME = 4;
+const MAX_UPLOADS_PER_FRAME = 20;
+const MAX_UNLOADS_PER_FRAME = 40;
 
 export class ChunkManager {
   private chunks = new Map<number, Chunk>();

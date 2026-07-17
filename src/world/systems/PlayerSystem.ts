@@ -154,6 +154,7 @@ export class PlayerSystem implements System {
     FrameStats.set("cameraY", pos[1]);
     FrameStats.set("cameraZ", pos[2]);
     FrameStats.set("flyMode", this.flyMode ? 1 : 0);
+    FrameStats.set("grounded", this.physics.isGrounded(entityIndex(entity)) ? 1 : 0);
 
     // === Update Chunk Loader Position ===
     const px = this.tBuf[T_PX]!;

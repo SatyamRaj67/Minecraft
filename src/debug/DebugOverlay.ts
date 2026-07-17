@@ -89,7 +89,7 @@ export class DebugOverlay {
         value: `${(raw["cameraX"] ?? 0).toFixed(1)}, ${(raw["cameraY"] ?? 0).toFixed(1)}, ${(raw["cameraZ"] ?? 0).toFixed(1)}`,
       },
       {
-        label: "Fly [F] ",
+        label: "Flight [F] ",
         value: (raw["flyMode"] ?? 0) > 0 ? "ON" : "OFF",
         color: (raw["flyMode"] ?? 0) > 0 ? COLOR_GREEN : COLOR_RED,
       },
@@ -97,6 +97,11 @@ export class DebugOverlay {
         label: "Colide [C]",
         value: (raw["collision"] ?? 0) > 0 ? "ON" : "OFF",
         color: (raw["collision"] ?? 0) > 0 ? COLOR_GREEN : COLOR_RED,
+      },
+      {
+        label: "Freeze [V]",
+        value: (raw["freezeFrustum"] ?? 0) > 0 ? "ON" : "OFF",
+        color: (raw["freezeFrustum"] ?? 0) > 0 ? COLOR_GREEN : COLOR_RED,
       },
       {
         label: "GC pauses",

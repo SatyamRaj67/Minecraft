@@ -16,6 +16,10 @@ struct FragOut {
     @location(1) normal: vec4<f32>,
 };
 
+const SUN_DIR = vec3<f32>(0.4, 0.8, 0.35);
+const SUN_COLOR = vec3<f32>(1.0, 0.98, 0.92);
+const AMBIENT = 0.35;
+
 fn encodeNormal(n: vec3<f32>) -> vec3<f32> {
     return n * 0.5 + 0.5;
 }
@@ -30,8 +34,15 @@ fn fs_main(in: FragIn) -> FragOut {
         discard;
     }
 
+    let n = normalize(in.worldNorm);
+    let sunDir = normalize(SUN_DIR);
+    let diffuse = max(dot(n, sunDir), 0.0);
+
+    let skyFactor = max(in.lightLevel, 0.05);
+    let shade = (AMBIENT + diffuse * (1.0 - AMBIENT)) * skyFactor;
+
     // Apply vertex light level (baked ambient / sky light)
-    let lit = texColor.rgb * max(in.lightLevel, 0.05);
+    let lit = texColor.rgb * SUN_COLOR * shade;
 
     var out: FragOut;
     out.albedo = vec4<f32>(lit, texColor.a);

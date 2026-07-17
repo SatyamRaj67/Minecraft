@@ -24,6 +24,7 @@ import { CompositePass } from "./passes/CompositePass";
 import { ChunkManager } from "@/world/chunk/ChunkManager";
 import { chunkKey } from "@/world/chunk/Chunk";
 import { Frustum } from "@/core/math/Frustum";
+import { EngineEvent, globalBus } from "@/core/events/EventBus";
 
 // === Camera State ===
 export interface CameraState {
@@ -43,6 +44,8 @@ export class Renderer {
   private atlas: TextureAtlasPacker;
   private animSys: AnimationSystem;
   private frustum: Frustum = new Frustum();
+
+  public freezeFrustum: boolean = false;
 
   private cameraUBOs: GpuBuffer[] = [];
   private cameraUboFrame = 0;
@@ -149,6 +152,10 @@ export class Renderer {
 
     this.graph.updateSwapchainSize(width, height);
     Logger.info(`Renderer: initialized ${width}x${height}`);
+
+    globalBus.on(EngineEvent.KEY_DOWN, ({ code }) => {
+      if (code === "KeyV") this.freezeFrustum = !this.freezeFrustum;
+    });
   }
 
   // === Resize ===
@@ -248,7 +255,12 @@ export class Renderer {
 
     mat4.lookAt(this.eye, this.center, this.up, this.viewMatrix);
     mat4.multiply(this.projMatrix, this.viewMatrix, this.vpMatrix);
-    this.frustum.extractFromVP(this.vpMatrix)
+
+    FrameStats.set("freezeFrustum", this.freezeFrustum ? 1 : 0);
+
+    if (!this.freezeFrustum) {
+      this.frustum.extractFromVP(this.vpMatrix);
+    }
 
     // Pack UBO:
     // view@0(16f),
